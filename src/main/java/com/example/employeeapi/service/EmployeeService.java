@@ -5,6 +5,7 @@ import com.example.employeeapi.dto.LoginRequest;
 import com.example.employeeapi.entity.Employee;
 import com.example.employeeapi.mapper.EmployeeMapper;
 import com.example.employeeapi.repo.EmployeeRepo;
+import com.example.employeeapi.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,7 @@ public class EmployeeService {
     private final EmployeeRepo repo;
     private final EmployeeMapper mapper;
     private final PasswordEncoder passwordEncoder; // Inject PasswordEncoder
-
+    private final JwtUtil jwtUtil;
     public String create(EmployeeRequest request) {
         Employee employee = mapper.toEntity(request);
 
@@ -33,9 +34,9 @@ public class EmployeeService {
         if (employee == null) {
             return "Invalid email";
         } else {
-            // Use passwordEncoder to compare passwords
             if (passwordEncoder.matches(req.password(), employee.getPassword())) {
-                return "Login Successful";
+                // Generate and return a JWT token
+                return jwtUtil.generateToken(employee.getEmail());
             } else {
                 return "Invalid password";
             }
