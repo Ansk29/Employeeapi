@@ -35,11 +35,12 @@ public class EmployeeService {
             return "Invalid email";
         } else {
             if (passwordEncoder.matches(req.password(), employee.getPassword())) {
-                // Generate and return a JWT token
-                return jwtUtil.generateToken(employee.getEmail());
+                // Generate and return a JWT token containing employeeId
+                return jwtUtil.generateToken(employee.getEmail(), employee.getEmployeeId());
             } else {
                 return "Invalid password";
             }
         }
     }
+
 }
