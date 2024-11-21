@@ -18,6 +18,7 @@ public class EmployeeService {
     private final EmployeeMapper mapper;
     private final PasswordEncoder passwordEncoder; // Inject PasswordEncoder
     private final JwtUtil jwtUtil;
+
     public String create(EmployeeRequest request) {
         Employee employee = mapper.toEntity(request);
 
@@ -31,16 +32,18 @@ public class EmployeeService {
 
     public String loginChecking(LoginRequest req) {
         Employee employee = repo.findByEmail(req.email());
+
         if (employee == null) {
-            return "Invalid email";
+            return "Invalid email"; // Return message if employee not found
+        }
+
+        // Check if the password matches
+        if (passwordEncoder.matches(req.password(), employee.getPassword())) {
+            // Generate JWT token containing email and employeeId as claims
+            String token = jwtUtil.generateToken(employee.getEmail(), employee.getEmployeeId());
+            return token;  // Return the token to be used by the frontend
         } else {
-            if (passwordEncoder.matches(req.password(), employee.getPassword())) {
-                // Generate and return a JWT token containing employeeId
-                return jwtUtil.generateToken(employee.getEmail(), employee.getEmployeeId());
-            } else {
-                return "Invalid password";
-            }
+            return "Invalid password";  // Return message if password doesn't match
         }
     }
-
 }
