@@ -7,11 +7,14 @@ import com.example.employeeapi.security.JwtUtil;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -23,37 +26,46 @@ public class EmployeeSalaryController {
     private final JwtUtil jwtUtil;
     private final PDFGeneratorService pdfGeneratorService;
 
+    @Autowired
     public EmployeeSalaryController(EmployeeSalaryService salaryService, JwtUtil jwtUtil, PDFGeneratorService pdfGeneratorService) {
         this.salaryService = salaryService;
         this.jwtUtil = jwtUtil;
         this.pdfGeneratorService = pdfGeneratorService;
     }
 
-    // Endpoint to fetch salary history
-    @GetMapping
-    public ResponseEntity<List<EmployeeSalary>> getSalaryHistory(@RequestHeader("Authorization") String authorizationHeader) {
+    // Method to get all salary history for the logged-in employee
+    @GetMapping("/history")
+    public ResponseEntity<List<EmployeeSalary>> getAllSalaries(
+            @RequestHeader("Authorization") String authorizationHeader) {
+
         String token = authorizationHeader.replace("Bearer ", "");
         Long employeeId = jwtUtil.extractEmployeeId(token);
-        List<EmployeeSalary> salaryHistory = salaryService.getSalaryHistory(employeeId);
+
+        // Fetch all salary records for the employee
+        List<EmployeeSalary> salaryHistory = salaryService.getAllSalariesByEmployeeId(employeeId);
+
         return ResponseEntity.ok(salaryHistory);
     }
 
-    // Endpoint to download salary history as a PDF
-    @GetMapping("/pdf")
-    public ResponseEntity<byte[]> downloadSalaryHistoryPDF(@RequestHeader("Authorization") String authorizationHeader) throws IOException {
+    // Method to download monthly salary slip as a PDF
+    @GetMapping("/salary-slip/pdf")
+    public ResponseEntity<byte[]> downloadMonthlySalarySlipPDF(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam int month, @RequestParam int year) throws IOException {
+
         String token = authorizationHeader.replace("Bearer ", "");
         Long employeeId = jwtUtil.extractEmployeeId(token);
 
-        // Get employee name and salary history
-        String employeeName = ""; // Replace this with actual employee name if available
-        List<EmployeeSalary> salaryHistory = salaryService.getSalaryHistory(employeeId);
+        // Use the service method to get salary information
+        EmployeeSalary salarySlip = salaryService.getSalaryByMonthAndYear(employeeId, month, year);
 
-        // Generate the PDF
-        byte[] pdfContent = pdfGeneratorService.generateSalaryHistoryPDF(employeeName, salaryHistory);
+        // Generate the PDF for the monthly salary slip
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        pdfGeneratorService.generateSalarySlipPDF(salarySlip, byteArrayOutputStream);
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=SalaryHistory.pdf")
-                .body(pdfContent);
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=SalarySlip_" + month + "_" + year + ".pdf")
+                .body(byteArrayOutputStream.toByteArray());
     }
 }

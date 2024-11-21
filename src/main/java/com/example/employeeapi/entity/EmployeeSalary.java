@@ -4,6 +4,7 @@ package com.example.employeeapi.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import java.util.Date;
 import java.time.LocalDate;
 
 @Entity

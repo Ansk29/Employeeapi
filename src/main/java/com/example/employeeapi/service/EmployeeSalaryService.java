@@ -1,20 +1,14 @@
 package com.example.employeeapi.service;
 
 import com.example.employeeapi.entity.EmployeeSalary;
-import com.example.employeeapi.repo.EmployeeSalaryRepository;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
-@Service
-public class EmployeeSalaryService {
 
-    private final EmployeeSalaryRepository salaryRepository;
+public interface EmployeeSalaryService {
 
-    public EmployeeSalaryService(EmployeeSalaryRepository salaryRepository) {
-        this.salaryRepository = salaryRepository;
-    }
+    // Method to fetch all salaries for an employee
+    List<EmployeeSalary> getAllSalariesByEmployeeId(Long employeeId);
 
-    public List<EmployeeSalary> getSalaryHistory(Long employeeId) {
-        return salaryRepository.findByEmployeeId(employeeId);
-    }
+    // Method to fetch salary by month and year
+    EmployeeSalary getSalaryByMonthAndYear(Long employeeId, int month, int year);
 }
